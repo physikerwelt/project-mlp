@@ -27,7 +27,7 @@ public class IntegrationTest {
 		return out;
 	}
 	@Test
-	@Ignore
+	//@Ignore
 	public void testNormalDoc(){
 		String docString = getFileContents("wikienmathsample.xml");
 		WikiDocumentEmitter wikiDocumentEmitter = new WikiDocumentEmitter();

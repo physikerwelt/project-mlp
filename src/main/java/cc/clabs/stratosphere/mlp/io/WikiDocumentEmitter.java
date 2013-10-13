@@ -24,15 +24,19 @@ import eu.stratosphere.pact.common.type.PactRecord;
 import eu.stratosphere.pact.common.type.base.PactString;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 /**
  *
  * @author rob
  */
 public class WikiDocumentEmitter extends TextInputFormat  {
+     private static final Log LOG = LogFactory.getLog( WikiDocumentEmitter.class );
 
     @Override
     public void configure (Configuration parameter) {
+        parameter.setString(DEFAULT_CHARSET_NAME, "UTF-8");
         super.configure( parameter );
         this.delimiter =  "</page>".getBytes();
     }
@@ -42,6 +46,7 @@ public class WikiDocumentEmitter extends TextInputFormat  {
      */
     @Override
     public boolean readRecord(PactRecord target, byte[] bytes, int offset, int numBytes) {
+        LOG.info("Offset:"+offset+"numBytes:"+numBytes);
      
         super.readRecord( target, bytes, offset, numBytes );
         String content = target.getField( 0, PactString.class ).getValue();

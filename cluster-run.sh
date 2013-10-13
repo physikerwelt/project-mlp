@@ -17,13 +17,13 @@
 
 DIR=`pwd`
 
-DATASET=path/to/dataset
-OUTPUT=path/to/output
+DATASET=/home/dopa-user/ms/project-mlp/src/test/resources/hindi.xml 
+OUTPUT=/tmp/wikiout
 
-MLP=/path/to/this-project/target/mlp.jar
-MODEL=/path/to/stanford/postagger/model/file
+MLP=/home/dopa-user/ms/project-mlp/target/mlp.jar
+MODEL=/home/dopa-user/b/model/stanford-postagger-full-2012-11-11/models/english-left3words-distsim.tagger
 
-STRATOSPHERE=/path/to/stratosphere
+STRATOSPHERE=/home/dopa-user/ms/dopa-vm/stratosphere/stratosphere-dist/target/stratosphere-dist-0.3-bin/stratosphere-0.3
 CLIENT=$STRATOSPHERE/bin/pact-client.sh
 LOGFILE=$STRATOSPHERE/log/nephele-rob-jobmanager-<your machine name>.log
 
