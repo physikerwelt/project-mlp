@@ -41,19 +41,6 @@ public class RelationFinder implements PlanAssembler, PlanAssemblerDescription {
         // parse job parameters
         String dataset = args[0];
         String output = args[1];
-        String model = args[2];
-        
-        String alpha = args[3];
-        String beta  = args[4];
-        String gamma = args[5];
-        String threshold = args[6];
-        
-        Configuration conf = GlobalConfiguration.getConfiguration();
-        // equals number of cores per node
-        //conf.setInteger( "pact.parallelization.max-intra-node-degree", 2 );
-        //conf.setBoolean( "jobmanager.profiling.enable", true );
-        //conf.setInteger( "pact.parallelization.degree", -1 );
-
         
         FileDataSource source = new FileDataSource( WikiDocumentEmitter.class, dataset, "Dumps" );
         
@@ -62,47 +49,15 @@ public class RelationFinder implements PlanAssembler, PlanAssemblerDescription {
                 .name( "Processing Documents" )
                 .input( source )
                 .build();
-        
-        MapContract sentences = MapContract
-                .builder( SentenceEmitter.class )
-                .name( "Sentences" )
-                .input( doc )
-                .build();
-        sentences.setParameter( "POS-MODEL", model );
-        
-        CoGroupContract candidates = CoGroupContract
-                .builder( CandidateEmitter.class, PactInteger.class, 0, 0 )
-                .name( "Candidates" )
-                .input1( doc )
-                .input2( sentences )
-                .build();
-        // order sentences by their position within the document
-        candidates.setGroupOrderForInputTwo( new Ordering( 2, PactDouble.class, Order.ASCENDING ) );
-        // set the weighting factors
-        candidates.setParameter( "α", alpha );
-        candidates.setParameter( "β", beta );
-        candidates.setParameter( "γ", gamma );
-
-        
-        ReduceContract filter = ReduceContract
-                .builder( FilterCandidates.class, PactInteger.class, 0 )
-                .name( "Filter" )
-                .input( candidates )
-                .build();
-        // order candidates by the identifier
-        filter.setGroupOrder( new Ordering( 1, PactRelation.class, Order.ASCENDING ) );
-        // sets the minimum threshold for a candidate's score
-        filter.setParameter( "THRESHOLD", threshold );
-
-        
-        
-        FileDataSink out = new FileDataSink( RecordOutputFormat.class, output, filter, "Output" );
+             
+        FileDataSink out = new FileDataSink( RecordOutputFormat.class, output, doc, "Output" );
         RecordOutputFormat.configureRecordFormat( out )
                 .recordDelimiter( '\n' )
                 .fieldDelimiter( '\t' )
-                .field( PactRelation.class, 0 );
+                .field( PactFormula.class, 0 );
                 
         Plan plan = new Plan( out, "Relation Finder" );
+        plan.setDefaultParallelism(16);
         return plan;
     }
 

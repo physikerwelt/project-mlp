@@ -40,12 +40,12 @@ public class IntegrationTest {
 		assertThat(doc.getText(), containsString("Albedo depends on the [[frequency]] of the radiation."));
 		PactFormulaList formulae = doc.getFormulas();
 		for (PactFormula pactFormula : formulae) {
-			System.out.println(pactFormula.getHash());
+			System.out.println(pactFormula.getHash()+","+pactFormula.getSrc()+","+pactFormula.getTime());
 		}
-		PactIdentifiers identifier = doc.getKnownIdentifiers();
-		for (PactString pactString : identifier) {
-			System.out.println(pactString.toString());
-		}
+//		PactIdentifiers identifier = doc.getKnownIdentifiers();
+//		for (PactString pactString : identifier) {
+//			System.out.println(pactString.toString());
+//		}
 	}
 	@Test
 	@Ignore

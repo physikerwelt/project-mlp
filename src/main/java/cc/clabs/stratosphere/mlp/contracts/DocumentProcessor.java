@@ -16,15 +16,11 @@
  */
 package cc.clabs.stratosphere.mlp.contracts;
 
-import cc.clabs.stratosphere.mlp.types.PactIdentifiers;
+import cc.clabs.stratosphere.mlp.types.PactFormula;
 import cc.clabs.stratosphere.mlp.types.WikiDocument;
 import eu.stratosphere.pact.common.stubs.Collector;
 import eu.stratosphere.pact.common.stubs.MapStub;
 import eu.stratosphere.pact.common.type.PactRecord;
-import eu.stratosphere.pact.common.type.base.PactInteger;
-import eu.stratosphere.pact.common.type.base.PactString;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 /**
  *
@@ -32,11 +28,6 @@ import org.apache.commons.logging.LogFactory;
  */
 public class DocumentProcessor extends MapStub {
         
-    private static final Log LOG = LogFactory.getLog( DocumentProcessor.class );
-    
-    private final PactString plaintext = new PactString();
-    private final PactIdentifiers list = new PactIdentifiers();
-    private final PactInteger id = new PactInteger();
     private final PactRecord target = new PactRecord();
    
     @Override
@@ -45,24 +36,12 @@ public class DocumentProcessor extends MapStub {
         WikiDocument doc = (WikiDocument) record.getField( 0, WikiDocument.class );
         
         // populate the list of known identifiers
-        list.clear();
-        for ( PactString var : doc.getKnownIdentifiers() )
-            list.add( var );
+        for (PactFormula pactFormula : doc.getFormulas()) {
+            target.clear();
+            target.setField( 0, pactFormula);
+        	collector.collect(target);
+        }
 
-        // generate a plaintext version of the document
-        plaintext.setValue( doc.getPlainText() );
-        
-        LOG.info( "Analyzed Page '"+ doc.getTitle() +"' (id: "+ doc.getId() +"), found identifiers: " + list.toString() );
-        
-        // set the id
-        id.setValue( doc.getId() );
-                
-        // finally emit all parts
-        target.clear();
-        target.setField( 0, id );
-        target.setField( 1, plaintext );
-        target.setField( 2, list );
-        collector.collect( target );   
     }
 }
 

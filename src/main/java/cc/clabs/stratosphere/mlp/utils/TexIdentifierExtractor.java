@@ -52,6 +52,7 @@ import uk.ac.ed.ph.snuggletex.SnuggleSession;
  * @author rob
  */
 public class TexIdentifierExtractor {
+	private static final Log LOG = LogFactory.getLog( TexIdentifierExtractor.class );
 
 	/**
 	 * list of false positive identifiers
@@ -82,15 +83,25 @@ public class TexIdentifierExtractor {
 		// create vanilla SnuggleEngine and new SnuggleSession
 		String xml;
 		if (!augmention) {
+
+        try {
+        	
+        	double start= System.nanoTime();
 			SnuggleEngine engine = new SnuggleEngine();
 			SnuggleSession session = engine.createSession();
-			try {
-				SnuggleInput input = new SnuggleInput("$$ "	+ cleanupTexString(formula) + " $$");
-				session.parseInput(input);
-				xml = session.buildXMLString();
-			} catch (Exception e) {
-				return new ArrayList<>();
-			}
+            SnuggleInput input = new SnuggleInput( "$$ "+ formula  +" $$" );
+            session.parseInput( input );
+            xml = session.buildXMLString();
+            double time_st =  (System.nanoTime()- start)/1000000;
+
+            start= System.nanoTime();
+            String mml = TeX2MML(formula);
+            System.out.println( "Snuggle rendering time: \n\t"+time_st+"ms vs LaTeXML rendering time \n\t" + (System.nanoTime()- start)/1000000 + "ms" );
+            LOG.info( "Snuggle rendering time: \n\t"+time_st+"µs vs LaTeXML rendering time \n\t" + (System.nanoTime()- start)/1000 + "µs" );
+        }
+        catch ( Exception e ) {
+            return new ArrayList<String>();
+        }
 		} else {
 			xml = formula;
 		}
@@ -148,7 +159,7 @@ public class TexIdentifierExtractor {
 	    try {
 	      List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(1);
 	      nameValuePairs.add(new BasicNameValuePair("tex",
-	          "literal:$"+tex+"$"));
+	          "$"+tex+"$"));
 	      //WARNING: This does not produce pmml, since there is a xstl trasformation that rewrites the output and removes pmml
 //	      nameValuePairs.add(new BasicNameValuePair("profile",
 //		          "mwsquery"));
@@ -174,13 +185,35 @@ public class TexIdentifierExtractor {
 		    }
 	    return "";
 	}
+	private static String tex2json2(String tex){
+	    HttpClient client = new DefaultHttpClient();
+	    //HttpPost post = new HttpPost("http://localhost/convert");
+	    HttpPost post = new HttpPost("http://dopa-2:8010");
+	    try {
+	      List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(1);
+	      nameValuePairs.add(new BasicNameValuePair("tex",
+	          tex));
+	      post.setEntity(new UrlEncodedFormEntity(nameValuePairs));
+	      HttpResponse response = client.execute(post);
+	      BufferedReader rd = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
+	      String line = "";
+	      String result="";
+	      while ((line = rd.readLine()) != null) {
+	        result+=line;
+	      }
+	      return result;
+	    } catch (IOException e) {
+		      e.printStackTrace();
+		    }
+	    return "";
+	}
 	private static String[] json2xml(String json){
 		String[] result = {"","",""};
 		try {
 		JSONObject Ojson = (JSONObject) JSONSerializer.toJSON(json);
-		result[0]=(Ojson.getString("status"));
+		//result[0]=(Ojson.getString("status"));
 		result[1]=(Ojson.getString("log"));
-		result[2]=(Ojson.getString("result"));
+		result[2]=(Ojson.getString("mml"));
 		} catch (Exception e) {
 		      e.printStackTrace();
 		    }
@@ -189,6 +222,6 @@ public class TexIdentifierExtractor {
 	public static String TeX2MML(String tex) throws XPathExpressionException, ParserConfigurationException, SAXException, IOException, TransformerException{
 		final String XPath="//math/semantics/mrow";
 		String mml="";
-		return  json2xml(tex2json(tex))[2];
+		return  json2xml(tex2json2(tex))[2];
 	}
 }
