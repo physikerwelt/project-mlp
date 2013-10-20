@@ -31,6 +31,9 @@ import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -226,33 +229,15 @@ public class WikiDocument implements Value {
     private void replaceMathTags() {
         Pattern p = Pattern.compile( "<math(.*?)>(.*?)</math>", Pattern.DOTALL );
         Matcher m;
-        String key, formula, text = raw.getValue();
-        
+        String  formula, text = raw.getValue();
+        try{
         while ( (m = p.matcher( text )).find() ) {
-            
-            key = " MATH" + Long.toHexString( (long) (Math.random() * 0x3b9aca00) ).toUpperCase() + " ";
             formula = m.group( 2 ).trim();
-            boolean augmention = !  m.group(1).isEmpty();
-            //augmention = false;
-            ArrayList<String> identifiers = TexIdentifierExtractor.getAll( formula,augmention );
-            if ( identifiers.isEmpty() ) {
-                text = m.replaceFirst( "" );
-            }
-            else if ( identifiers.size() == 1 ) {
-                text = m.replaceFirst( identifiers.get( 0 ) );
-            }
-            else {
-                formulas.add( new PactFormula( key, formula ) );
-                text = m.replaceFirst( key );
-            }
-            
-            
-            // add found identifers to the page wide list
-            for ( String identifier : identifiers ) {
-                if ( knownIdentifiers.containsIdentifier( identifier ) ) continue;
-                knownIdentifiers.add( new PactString( identifier ) );
-            }            
-            
+            PactFormula pFormula = new PactFormula( formula ); 
+            formulas.add( pFormula);
+            text = m.replaceFirst( pFormula.getHash());                
+        }}catch(Exception e){
+        	
         }
         raw.setValue( text );
     }

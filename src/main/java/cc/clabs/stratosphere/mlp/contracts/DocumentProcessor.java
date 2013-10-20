@@ -16,15 +16,15 @@
  */
 package cc.clabs.stratosphere.mlp.contracts;
 
-import cc.clabs.stratosphere.mlp.types.PactIdentifiers;
+import com.formulasearchengine.mathoid.benchmark.FormulaRecordFields;
+
+import cc.clabs.stratosphere.mlp.types.PactFormula;
 import cc.clabs.stratosphere.mlp.types.WikiDocument;
 import eu.stratosphere.pact.common.stubs.Collector;
 import eu.stratosphere.pact.common.stubs.MapStub;
 import eu.stratosphere.pact.common.type.PactRecord;
 import eu.stratosphere.pact.common.type.base.PactInteger;
 import eu.stratosphere.pact.common.type.base.PactString;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 /**
  *
@@ -32,37 +32,26 @@ import org.apache.commons.logging.LogFactory;
  */
 public class DocumentProcessor extends MapStub {
         
-    private static final Log LOG = LogFactory.getLog( DocumentProcessor.class );
-    
-    private final PactString plaintext = new PactString();
-    private final PactIdentifiers list = new PactIdentifiers();
-    private final PactInteger id = new PactInteger();
     private final PactRecord target = new PactRecord();
-   
+    //TODO: Do we have PactHash or PactByteArray
+    private final PactString hash = new PactString();
+    private final PactInteger count = new PactInteger(1);
+
     @Override
     public void map( PactRecord record, Collector<PactRecord> collector ) {
         
         WikiDocument doc = (WikiDocument) record.getField( 0, WikiDocument.class );
         
-        // populate the list of known identifiers
-        list.clear();
-        for ( PactString var : doc.getKnownIdentifiers() )
-            list.add( var );
+        // populate the list of formulae
+        for (PactFormula pactFormula : doc.getFormulas()) {
+            target.clear();
+            hash.setValue(pactFormula.getHash() );
+            target.setField(FormulaRecordFields.HASH.ordinal(), hash);
+            target.setField( FormulaRecordFields.FORMULAE.ordinal(), pactFormula);
+            target.setField( FormulaRecordFields.COUNT.ordinal(), count);
+        	collector.collect(target);
+        }
 
-        // generate a plaintext version of the document
-        plaintext.setValue( doc.getPlainText() );
-        
-        LOG.info( "Analyzed Page '"+ doc.getTitle() +"' (id: "+ doc.getId() +"), found identifiers: " + list.toString() );
-        
-        // set the id
-        id.setValue( doc.getId() );
-                
-        // finally emit all parts
-        target.clear();
-        target.setField( 0, id );
-        target.setField( 1, plaintext );
-        target.setField( 2, list );
-        collector.collect( target );   
     }
 }
 
